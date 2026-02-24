@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from backend.db import db
 from datetime import datetime
+from bson import ObjectId
 
 diary_bp = Blueprint("diary", __name__)
 
@@ -30,3 +31,36 @@ def create_diary():
     doc["createdAt"]=doc["createdAt"].isoformat()
     doc["updatedAt"]=doc["updatedAt"].isoformat()
     return jsonify(doc), 201
+
+@diary_bp.route("/api/diary", methods=["GET"])
+def get_diaries():
+    docs=list(diaries.find().sort("createdAt",-1))
+    result=[]
+    for doc in docs:
+        result.append({
+            "_id":str(doc["_id"]),
+            "title":doc["title"],
+            "content":doc["content"],
+            "createdAt":doc["createdAt"].isoformat(),
+            "updatedAt":doc["updatedAt"].isoformat()
+        })
+    return jsonify(result), 200
+
+
+@diary_bp.route("/api/diary/<diary_id>", methods=["GET"])
+def get_diary(diary_id):
+    try:
+        doc=diaries.find_one({"_id": ObjectId(diary_id)})
+    except:
+        return jsonify({"error":"잘못된 id 형식입니다"}),400
+    if not doc:
+        return jsonify({"error":"해당하는 diary를 찾을 수 없습니다"}),404
+    
+    result={
+            "_id":str(doc["_id"]),
+            "title":doc["title"],
+            "content":doc["content"],
+            "createdAt":doc["createdAt"].isoformat(),
+            "updatedAt":doc["updatedAt"].isoformat()
+    }
+    return jsonify(result), 200
