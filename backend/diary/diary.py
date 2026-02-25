@@ -111,3 +111,16 @@ def update_diary(diary_id):
         "updatedAt":doc["updatedAt"].isoformat()
     }
     return jsonify(response), 200
+
+
+@diary_bp.route("/api/diary/<diary_id>", methods=["DELETE"])
+def delete_diary(diary_id):
+    try:
+        result=diaries.delete_one({"_id":ObjectId(diary_id)})
+    except:
+        return jsonify({"error":"잘못된 id"}), 400
+    
+    if result.deleted_count==0:
+        return jsonify({"error":"해당하는 diary를 찾을 수 없습니다"})
+    
+    return jsonify({"message":"삭제완료"}), 200
