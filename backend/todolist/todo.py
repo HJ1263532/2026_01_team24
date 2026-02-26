@@ -12,7 +12,19 @@ todos = db.todos
 def parse_datetime(value):
     if value is None:
         return None
-    return datetime.fromisoformat(value)
+
+    kst = ZoneInfo("Asia/Seoul")
+
+    dt = datetime.fromisoformat(value)
+
+    # 사용자가 보낸 시간은 한국시간이라고 가정
+    dt_kst = dt.replace(tzinfo=kst)
+
+    # UTC로 변환해서 저장
+    dt_utc = dt_kst.astimezone(ZoneInfo("UTC"))
+
+    # Mongo에 넣기 좋게 tz 제거
+    return dt_utc.replace(tzinfo=None)
 
 # todo작성
 @todo_bp.route("/api/todos", methods=["POST"])
