@@ -18,7 +18,7 @@ app.register_blueprint(todo_bp)
 app.register_blueprint(diary_bp)
 app.register_blueprint(chat_bp)
 
-print(app.url_map)
+#print(app.url_map)
 
 # ✅ 스케줄러 등록 (debug 모드 중복 실행 방지)
 def start_scheduler():
