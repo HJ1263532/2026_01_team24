@@ -79,7 +79,7 @@ def delete_todo(todo_id):
 
     return jsonify({"message": "deleted"})
 
-#리스트 전체 조회
+#리스트 전체 조회 -> 수정사항있음(오류발생중.)
 @todo_bp.route("/api/todos", methods=["GET"])
 def get_todos():
 
@@ -91,8 +91,8 @@ def get_todos():
             "title": doc["title"],
             "isCompleted":doc["isCompleted"],
             "createdAt": doc["createdAt"],
-            "dueDate": doc.get["dueDate"],
-            "remindAt": doc.get["remindAt"]
+            "dueDate": doc.get("dueDate"),
+            "remindAt": doc.get("remindAt")
         })
 
     return jsonify(result)
