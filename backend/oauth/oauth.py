@@ -10,6 +10,8 @@ oauth_bp = Blueprint("oauth", __name__)
 
 users = db.users
 
+# 중복 로그인 방지용 인덱스
+users.create_index("googleId", unique=True)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -17,7 +19,23 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 JWT_SECRET = os.getenv("JWT_SECRET")
 
 
-# 1️Google code -> access token 교환
+# JWT 검증 함수
+def verify_token():
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        return None
+
+    try:
+        token = auth_header.split(" ")[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        return payload["userId"]
+    except:
+        return None
+
+
+# Google 로그인
 @oauth_bp.route("/api/auth/google", methods=["POST"])
 def google_login():
 
@@ -27,7 +45,6 @@ def google_login():
     if not code:
         return jsonify({"error": "code required"}), 400
 
-    # Google token 요청
     token_url = "https://oauth2.googleapis.com/token"
 
     token_data = {
@@ -39,7 +56,6 @@ def google_login():
     }
 
     token_res = requests.post(token_url, data=token_data)
-
     token_json = token_res.json()
 
     access_token = token_json.get("access_token")
@@ -47,8 +63,7 @@ def google_login():
     if not access_token:
         return jsonify({"error": "token error"}), 400
 
-
-    #Google user 정보 가져오기
+    # Google user 정보 가져오기
     userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
 
     userinfo_res = requests.get(
@@ -65,8 +80,7 @@ def google_login():
     name = userinfo["name"]
     picture = userinfo["picture"]
 
-
-    #MongoDB 사용자 확인
+    # MongoDB 사용자 확인
     user = users.find_one({"googleId": google_id})
 
     if not user:
@@ -84,11 +98,9 @@ def google_login():
         user_id = str(result.inserted_id)
 
     else:
-
         user_id = str(user["_id"])
 
-
-    #JWT 발급
+    # JWT 발급
     payload = {
         "userId": user_id,
         "email": email,
@@ -105,4 +117,30 @@ def google_login():
             "name": name,
             "picture": picture
         }
+    })
+
+
+# 로그인 상태 확인
+@oauth_bp.route("/api/auth/check", methods=["GET"])
+def check_login():
+
+    user_id = verify_token()
+
+    if not user_id:
+        return jsonify({"loggedIn": False}), 401
+
+    user = users.find_one({"_id": user_id})
+
+    return jsonify({
+        "loggedIn": True,
+        "userId": user_id
+    })
+
+
+# 로그아웃
+@oauth_bp.route("/api/auth/logout", methods=["POST"])
+def logout():
+
+    return jsonify({
+        "message": "logout success"
     })
