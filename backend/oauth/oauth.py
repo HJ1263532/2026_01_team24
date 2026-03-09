@@ -137,3 +137,24 @@ def logout():
     return jsonify({
         "message": "logout success"
     })
+
+# 사용자 조회
+@oauth_bp.route("/api/auth/me", methods=["GET"])
+def get_me():
+
+    user_id = verify_token()
+
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    user = users.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return jsonify({"error": "user not found"}), 404
+
+    return jsonify({
+        "id": str(user["_id"]),
+        "email": user["email"],
+        "name": user["name"],
+        "picture": user["picture"]
+    })
