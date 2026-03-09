@@ -158,3 +158,29 @@ def get_me():
         "name": user["name"],
         "picture": user["picture"]
     })
+
+#토큰 재발급
+@oauth_bp.route("/api/auth/reissue", methods=["POST"])
+def reissue_token():
+
+    user_id = verify_token()
+
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    user = users.find_one({"_id": ObjectId(user_id)})
+
+    if not user:
+        return jsonify({"error": "user not found"}), 404
+
+    payload = {
+        "userId": user_id,
+        "email": user["email"],
+        "exp": datetime.utcnow() + timedelta(days=7)
+    }
+
+    new_token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+    return jsonify({
+        "token": new_token
+    })
