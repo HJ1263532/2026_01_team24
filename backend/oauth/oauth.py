@@ -5,6 +5,7 @@ import jwt
 
 from backend.db import db
 from datetime import datetime, timedelta
+from bson import ObjectId
 
 oauth_bp = Blueprint("oauth", __name__)
 
@@ -40,28 +41,10 @@ def verify_token():
 def google_login():
 
     data = request.json
-    code = data.get("code")
-
-    if not code:
-        return jsonify({"error": "code required"}), 400
-
-    token_url = "https://oauth2.googleapis.com/token"
-
-    token_data = {
-        "code": code,
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uri": "postmessage",
-        "grant_type": "authorization_code"
-    }
-
-    token_res = requests.post(token_url, data=token_data)
-    token_json = token_res.json()
-
-    access_token = token_json.get("access_token")
+    access_token = data.get("accessToken")
 
     if not access_token:
-        return jsonify({"error": "token error"}), 400
+        return jsonify({"error": "accessToken required"}), 400
 
     # Google user 정보 가져오기
     userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -75,10 +58,20 @@ def google_login():
 
     userinfo = userinfo_res.json()
 
-    google_id = userinfo["sub"]
-    email = userinfo["email"]
-    name = userinfo["name"]
-    picture = userinfo["picture"]
+    # 디버깅용 (문제 발생 시 확인)
+    print("GOOGLE USERINFO:", userinfo)
+
+    # userinfo 검증
+    if "sub" not in userinfo:
+        return jsonify({
+            "error": "google userinfo error",
+            "google_response": userinfo
+        }), 400
+
+    google_id = userinfo.get("sub")
+    email = userinfo.get("email")
+    name = userinfo.get("name")
+    picture = userinfo.get("picture")
 
     # MongoDB 사용자 확인
     user = users.find_one({"googleId": google_id})
@@ -129,7 +122,7 @@ def check_login():
     if not user_id:
         return jsonify({"loggedIn": False}), 401
 
-    user = users.find_one({"_id": user_id})
+    user = users.find_one({"_id": ObjectId(user_id)})
 
     return jsonify({
         "loggedIn": True,
