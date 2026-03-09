@@ -1,6 +1,7 @@
 from flask import Flask
 from backend.todolist.todo import todo_bp
 from dotenv import load_dotenv
+from backend.oauth.oauth import oauth_bp
 import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -13,6 +14,7 @@ load_dotenv()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
 app.register_blueprint(todo_bp)
+app.register_blueprint(oauth_bp)
 
 print(app.url_map)
 
