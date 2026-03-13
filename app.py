@@ -3,6 +3,7 @@ from backend.todolist.todo import todo_bp
 from backend.diary.diary import diary_bp
 from backend.chat.chat import chat_bp
 from dotenv import load_dotenv
+from backend.oauth.oauth import oauth_bp
 import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
