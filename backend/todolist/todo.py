@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
 from backend.db import db
+from backend.oauth.oauth import verify_token
 from datetime import datetime
 from bson import ObjectId
 from zoneinfo import ZoneInfo
-from datetime import datetime
 
 todo_bp = Blueprint("todo", __name__)
 
@@ -29,34 +29,41 @@ def parse_datetime(value):
 # todo작성
 @todo_bp.route("/api/todos", methods=["POST"])
 def add_todo():
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
     data=request.json
     if not data or "title" not in data:
         return jsonify({"error": "title is not reqired"}),400
     elif "dueDate" not in data:
         return jsonify({"error":"dueDate is not reqired"}),400
-    
+
     try:
         due_date = parse_datetime(data.get("dueDate"))
         remind_at = parse_datetime(data.get("remindAt"))
     except ValueError:
         return jsonify({"error": "invalid datetime format"}), 400
-    
+
+    now_utc = datetime.utcnow()
+    if due_date and due_date < now_utc:
+        return jsonify({"error": "dueDate cannot be in the past"}), 400
+    if remind_at and remind_at < now_utc:
+        return jsonify({"error": "remindAt cannot be in the past"}), 400
+
     doc={
-        # 나중에 로그인 추가 되면 여기 userId추가해야함. "userId": current_user_id로 변경할 것
-        "userId":None,
+        "userId": user_id,
         "title": data["title"],
-        "isCompleted": False,   # ← 기본값
+        "isCompleted": False,
         "createdAt":datetime.utcnow(),
-        #dueDate와 remindAt은 사용자가 직접 적는 부분이지만 백으로 들어올 때에는 무조건 ISO형식으로 들어와야
         "dueDate": due_date,
         "remindAt": remind_at,
-
         "remindNotified": False,
         "dueBeforeNotified": False
     }
 
     result=todos.insert_one(doc)
-    
+
     return jsonify({
         "id": str(result.inserted_id),
         "title":doc["title"],
@@ -69,9 +76,13 @@ def add_todo():
 # todo삭제
 @todo_bp.route("/api/todos/<todo_id>", methods=["DELETE"])
 def delete_todo(todo_id):
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
 
     result = todos.delete_one({
-        "_id": ObjectId(todo_id)
+        "_id": ObjectId(todo_id),
+        "userId": user_id
     })
 
     if result.deleted_count == 0:
@@ -79,13 +90,16 @@ def delete_todo(todo_id):
 
     return jsonify({"message": "deleted"})
 
-#리스트 전체 조회 -> 수정사항있음(오류발생중.)
+#리스트 전체 조회
 @todo_bp.route("/api/todos", methods=["GET"])
 def get_todos():
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
 
     result = []
 
-    for doc in todos.find().sort("createdAt", 1):
+    for doc in todos.find({"userId": user_id}).sort("createdAt", 1):
         result.append({
             "id": str(doc["_id"]),
             "title": doc["title"],
@@ -100,13 +114,13 @@ def get_todos():
 #완료 표시
 @todo_bp.route("/api/todos/<todo_id>/complete", methods=["PATCH"])
 def complete_todo(todo_id):
-
-    body = request.get_json()
-    is_completed = body.get("isCompleted")
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
 
     result = todos.update_one(
-        {"_id": ObjectId(todo_id)},
-        {"$set": {"isCompleted": is_completed}}
+        {"_id": ObjectId(todo_id), "userId": user_id},
+        {"$set": {"isCompleted": request.get_json().get("isCompleted")}}
     )
 
     if result.matched_count == 0:
@@ -117,6 +131,9 @@ def complete_todo(todo_id):
 #todo수정
 @todo_bp.route("/api/todos/update/<todo_id>", methods=["PATCH"])
 def update_todo(todo_id):
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
 
     body = request.get_json()
 
@@ -125,17 +142,23 @@ def update_todo(todo_id):
     if "title" in body:
         update_data["title"] = body["title"]
 
-    if not update_data:
-        return jsonify({"message": "nothing to update"}), 400
-    
     if "dueDate" in body:
         update_data["dueDate"] = parse_datetime(body["dueDate"])
 
     if "remindAt" in body:
         update_data["remindAt"] = parse_datetime(body["remindAt"])
 
+    now_utc = datetime.utcnow()
+    if "dueDate" in update_data and update_data["dueDate"] and update_data["dueDate"] < now_utc:
+        return jsonify({"error": "dueDate cannot be in the past"}), 400
+    if "remindAt" in update_data and update_data["remindAt"] and update_data["remindAt"] < now_utc:
+        return jsonify({"error": "remindAt cannot be in the past"}), 400
+
+    if not update_data:
+        return jsonify({"message": "nothing to update"}), 400
+
     result = todos.update_one(
-        {"_id": ObjectId(todo_id)},
+        {"_id": ObjectId(todo_id), "userId": user_id},
         {"$set": update_data}
     )
 

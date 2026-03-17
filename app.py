@@ -18,6 +18,7 @@ app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
 app.register_blueprint(todo_bp)
 app.register_blueprint(diary_bp)
 app.register_blueprint(chat_bp)
+app.register_blueprint(oauth_bp)
 
 #print(app.url_map)
 
