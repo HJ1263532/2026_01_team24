@@ -24,6 +24,7 @@ export default function HomeScreen() {
         <HelloWave />
         <ThemedView style={{ marginTop: 20 }}>
           <Link href="/todolist">
+            {/* todolist 페이지 이동 버튼 */}
             <ThemedText type="subtitle" style={styles.todoButton}>
               todo쓰러가기
             </ThemedText>
@@ -105,6 +106,7 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
   },
+  // todolist 페이지 이동 버튼 디자인
   todoButton: {
     backgroundColor: '#4F46E5',
     color: '#fff',

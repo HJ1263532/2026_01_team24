@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Pressable,
+    ScrollView,
+    TextInput,
+    Alert,
+} from 'react-native';
 
 type Todo = {
     id: string;
@@ -15,29 +23,73 @@ export default function TodoListScreen() {
             id: '1',
             title: '팀플 회의 준비',
             isCompleted: false,
-            dueDate: '2026-03-27 18:00',
-            remindAt: '2026-03-27 17:00',
-        },
-        {
-            id: '2',
-            title: '과제 제출',
-            isCompleted: true,
-            dueDate: '2026-03-28 23:59',
-            remindAt: '2026-03-28 21:00',
-        },
-        {
-            id: '3',
-            title: '장보기',
-            isCompleted: false,
-            dueDate: '2026-03-29 19:00',
-            remindAt: '2026-03-29 18:00',
+            dueDate: '2026-03-27T18:00:00',
+            remindAt: '2026-03-27T17:00:00',
         },
     ]);
 
     const [openTodoId, setOpenTodoId] = useState<string | null>(null);
 
+    const [showForm, setShowForm] = useState(false);
+    const [title, setTitle] = useState('');
+    const [dueDate, setDueDate] = useState('');
+    const [remindAt, setRemindAt] = useState('');
+
     const handleCardPress = (todoId: string) => {
         setOpenTodoId((prev) => (prev === todoId ? null : todoId));
+    };
+
+    const handleAddTodo = async () => {
+        if (!title.trim()) {
+            Alert.alert('오류', '제목을 입력해주세요.');
+            return;
+        }
+
+        if (!dueDate.trim()) {
+            Alert.alert('오류', '마감일을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://127.0.0.1:5000/api/todos', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title,
+                    dueDate,
+                    remindAt: remindAt || null,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                Alert.alert('추가 실패', data.error || 'todo 추가 중 오류가 발생했습니다.');
+                return;
+            }
+
+            const newTodo: Todo = {
+                id: data.id,
+                title: data.title,
+                isCompleted: data.isCompleted,
+                dueDate: data.dueDate,
+                remindAt: data.remindAt,
+            };
+
+            setTodos((prev) => [...prev, newTodo]);
+
+            setTitle('');
+            setDueDate('');
+            setRemindAt('');
+            setShowForm(false);
+
+            Alert.alert('성공', 'todo가 추가되었습니다.');
+        } catch (error) {
+            Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
+            console.error(error);
+        }
     };
 
     return (
@@ -45,9 +97,60 @@ export default function TodoListScreen() {
             <Text style={styles.pageTitle}>Todo List</Text>
             <Text style={styles.pageDescription}>해야 할 일을 확인하고 관리하는 페이지</Text>
 
-            <Pressable style={styles.addButton}>
+            <Pressable style={styles.addButton} onPress={() => setShowForm((prev) => !prev)}>
                 <Text style={styles.addButtonText}>+ 할 일 추가</Text>
             </Pressable>
+
+            {showForm && (
+                <View style={styles.formBox}>
+                    <Text>제목</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={title}
+                        onChangeText={setTitle}
+                        placeholder="예: 팀플 회의 준비"
+                    />
+
+                    <Text>마감일</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={dueDate}
+                        onChangeText={setDueDate}
+                        placeholder="예: 2026-03-27T18:00:00"
+                    />
+
+                    <Text>알림시간</Text>
+                    <TextInput
+                        style={styles.input}
+                        value={remindAt}
+                        onChangeText={setRemindAt}
+                        placeholder="예: 2026-03-27T17:00:00"
+                    />
+
+                    <View style={styles.buttonRow}>
+                        <Pressable
+                            style={styles.actionButton}
+                            onPress={() => {
+                                console.log('저장 버튼 눌림');
+                                handleAddTodo();
+                            }}
+                        >
+                            <Text>저장</Text>
+                        </Pressable>
+                        <Pressable
+                            style={styles.actionButton}
+                            onPress={() => {
+                                setShowForm(false);
+                                setTitle('');
+                                setDueDate('');
+                                setRemindAt('');
+                            }}
+                        >
+                            <Text>취소</Text>
+                        </Pressable>
+                    </View>
+                </View>
+            )}
 
             <View style={styles.listContainer}>
                 {todos.map((todo) => {
@@ -108,6 +211,17 @@ const styles = StyleSheet.create({
     addButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    formBox: {
+        borderWidth: 1,
+        padding: 16,
+        marginBottom: 20,
+    },
+    input: {
+        borderWidth: 1,
+        padding: 10,
+        marginTop: 8,
+        marginBottom: 12,
     },
     listContainer: {
         gap: 12,
