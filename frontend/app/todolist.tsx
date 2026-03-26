@@ -184,148 +184,190 @@ export default function TodoListScreen() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.pageTitle}>Todo List</Text>
-            <Text style={styles.pageDescription}>해야 할 일을 확인하고 관리하는 페이지</Text>
+        <Pressable
+            style={{ flex: 1 }}
+            onPress={() => {
+                setOpenTodoId(null);
+                cancelEditTodo();
+                setShowForm(false);
+            }}
+        >
+            <ScrollView contentContainerStyle={styles.container}>
+                <Text style={styles.pageTitle}>Todo List</Text>
+                <Text style={styles.pageDescription}>해야 할 일을 확인하고 관리하는 페이지</Text>
 
-            <Pressable style={styles.addButton} onPress={() => setShowForm((prev) => !prev)}>
-                <Text style={styles.addButtonText}>+ 할 일 추가</Text>
-            </Pressable>
+                <Pressable
+                    style={styles.addButton}
+                    onPress={(e) => {
+                        e.stopPropagation();
+                        setShowForm((prev) => !prev);
+                    }}
+                >
+                    <Text style={styles.addButtonText}>+ 할 일 추가</Text>
+                </Pressable>
 
-            {showForm && (
-                <View style={styles.formBox}>
-                    <Text>제목</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={title}
-                        onChangeText={setTitle}
-                        placeholder="예: 팀플 회의 준비"
-                    />
+                {showForm && (
+                    <Pressable style={styles.formBox} onPress={(e) => e.stopPropagation()}>
+                        <Text>제목</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={title}
+                            onChangeText={setTitle}
+                            placeholder="예: 팀플 회의 준비"
+                        />
 
-                    <Text>마감일</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={dueDate}
-                        onChangeText={setDueDate}
-                        placeholder="예: 2026-03-27T18:00:00"
-                    />
+                        <Text>마감일</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={dueDate}
+                            onChangeText={setDueDate}
+                            placeholder="예: 2026-03-27T18:00:00"
+                        />
 
-                    <Text>알림시간</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={remindAt}
-                        onChangeText={setRemindAt}
-                        placeholder="예: 2026-03-27T17:00:00"
-                    />
+                        <Text>알림시간</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={remindAt}
+                            onChangeText={setRemindAt}
+                            placeholder="예: 2026-03-27T17:00:00"
+                        />
 
-                    <View style={styles.buttonRow}>
-                        <Pressable style={styles.actionButton} onPress={handleAddTodo}>
-                            <Text>저장</Text>
-                        </Pressable>
+                        <View style={styles.buttonRow}>
+                            <Pressable
+                                style={styles.actionButton}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    handleAddTodo();
+                                }}
+                            >
+                                <Text>저장</Text>
+                            </Pressable>
 
-                        <Pressable
-                            style={styles.actionButton}
-                            onPress={() => {
-                                setShowForm(false);
-                                setTitle('');
-                                setDueDate('');
-                                setRemindAt('');
-                            }}
-                        >
-                            <Text>취소</Text>
-                        </Pressable>
-                    </View>
-                </View>
-            )}
+                            <Pressable
+                                style={styles.actionButton}
+                                onPress={(e) => {
+                                    e.stopPropagation();
+                                    setShowForm(false);
+                                    setTitle('');
+                                    setDueDate('');
+                                    setRemindAt('');
+                                }}
+                            >
+                                <Text>취소</Text>
+                            </Pressable>
+                        </View>
+                    </Pressable>
+                )}
 
-            <View style={styles.listContainer}>
-                {todos.length === 0 ? (
-                    <View style={styles.emptyBox}>
-                        <Text>아직 등록된 할 일이 없어요.</Text>
-                    </View>
-                ) : (
-                    todos.map((todo) => {
-                        const isOpen = openTodoId === todo.id;
-                        const isEditing = editingTodoId === todo.id;
+                <View style={styles.listContainer}>
+                    {todos.length === 0 ? (
+                        <View style={styles.emptyBox}>
+                            <Text>아직 등록된 할 일이 없어요.</Text>
+                        </View>
+                    ) : (
+                        todos.map((todo) => {
+                            const isOpen = openTodoId === todo.id;
+                            const isEditing = editingTodoId === todo.id;
 
-                        return (
-                            <View key={todo.id} style={styles.card}>
-                                <Pressable onPress={() => handleCardPress(todo.id)}>
+                            return (
+                                <Pressable
+                                    key={todo.id}
+                                    style={styles.card}
+                                    onPress={(e) => {
+                                        e.stopPropagation();
+                                        handleCardPress(todo.id);
+                                    }}
+                                >
                                     <Text style={styles.cardTitle}>{todo.title}</Text>
                                     <Text>완료 여부: {todo.isCompleted ? '완료' : '미완료'}</Text>
                                     <Text>마감일: {todo.dueDate ?? '없음'}</Text>
+
+                                    {isOpen && (
+                                        <Pressable style={styles.detailBox} onPress={(e) => e.stopPropagation()}>
+                                            {!isEditing ? (
+                                                <>
+                                                    <Text>알림시간: {todo.remindAt ?? '없음'}</Text>
+
+                                                    <View style={styles.buttonRow}>
+                                                        <Pressable
+                                                            style={styles.actionButton}
+                                                            onPress={(e) => {
+                                                                e.stopPropagation();
+                                                                startEditTodo(todo);
+                                                            }}
+                                                        >
+                                                            <Text>수정</Text>
+                                                        </Pressable>
+
+                                                        <Pressable
+                                                            style={styles.actionButton}
+                                                            onPress={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDeleteTodo(todo.id);
+                                                            }}
+                                                        >
+                                                            <Text>삭제</Text>
+                                                        </Pressable>
+                                                    </View>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Text>제목</Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        value={editTitle}
+                                                        onChangeText={setEditTitle}
+                                                        placeholder="제목을 입력하세요"
+                                                    />
+
+                                                    <Text>마감일</Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        value={editDueDate}
+                                                        onChangeText={setEditDueDate}
+                                                        placeholder="예: 2026-03-27T18:00:00"
+                                                    />
+
+                                                    <Text>알림시간</Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        value={editRemindAt}
+                                                        onChangeText={setEditRemindAt}
+                                                        placeholder="예: 2026-03-27T17:00:00"
+                                                    />
+
+                                                    <View style={styles.buttonRow}>
+                                                        <Pressable
+                                                            style={styles.actionButton}
+                                                            onPress={(e) => {
+                                                                e.stopPropagation();
+                                                                handleUpdateTodo(todo.id);
+                                                            }}
+                                                        >
+                                                            <Text>저장</Text>
+                                                        </Pressable>
+
+                                                        <Pressable
+                                                            style={styles.actionButton}
+                                                            onPress={(e) => {
+                                                                e.stopPropagation();
+                                                                cancelEditTodo();
+                                                            }}
+                                                        >
+                                                            <Text>취소</Text>
+                                                        </Pressable>
+                                                    </View>
+                                                </>
+                                            )}
+                                        </Pressable>
+                                    )}
                                 </Pressable>
-
-                                {isOpen && (
-                                    <View style={styles.detailBox}>
-                                        {!isEditing ? (
-                                            <>
-                                                <Text>알림시간: {todo.remindAt ?? '없음'}</Text>
-
-                                                <View style={styles.buttonRow}>
-                                                    <Pressable
-                                                        style={styles.actionButton}
-                                                        onPress={() => startEditTodo(todo)}
-                                                    >
-                                                        <Text>수정</Text>
-                                                    </Pressable>
-
-                                                    <Pressable
-                                                        style={styles.actionButton}
-                                                        onPress={() => handleDeleteTodo(todo.id)}
-                                                    >
-                                                        <Text>삭제</Text>
-                                                    </Pressable>
-                                                </View>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Text>제목</Text>
-                                                <TextInput
-                                                    style={styles.input}
-                                                    value={editTitle}
-                                                    onChangeText={setEditTitle}
-                                                    placeholder="제목을 입력하세요"
-                                                />
-
-                                                <Text>마감일</Text>
-                                                <TextInput
-                                                    style={styles.input}
-                                                    value={editDueDate}
-                                                    onChangeText={setEditDueDate}
-                                                    placeholder="예: 2026-03-27T18:00:00"
-                                                />
-
-                                                <Text>알림시간</Text>
-                                                <TextInput
-                                                    style={styles.input}
-                                                    value={editRemindAt}
-                                                    onChangeText={setEditRemindAt}
-                                                    placeholder="예: 2026-03-27T17:00:00"
-                                                />
-
-                                                <View style={styles.buttonRow}>
-                                                    <Pressable
-                                                        style={styles.actionButton}
-                                                        onPress={() => handleUpdateTodo(todo.id)}
-                                                    >
-                                                        <Text>저장</Text>
-                                                    </Pressable>
-
-                                                    <Pressable style={styles.actionButton} onPress={cancelEditTodo}>
-                                                        <Text>취소</Text>
-                                                    </Pressable>
-                                                </View>
-                                            </>
-                                        )}
-                                    </View>
-                                )}
-                            </View>
-                        );
-                    })
-                )}
-            </View>
-        </ScrollView>
+                            );
+                        })
+                    )}
+                </View>
+            </ScrollView>
+        </Pressable>
     );
 }
 
