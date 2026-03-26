@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -13,21 +13,14 @@ type Todo = {
     id: string;
     title: string;
     isCompleted: boolean;
-    dueDate: string;
-    remindAt: string;
+    dueDate: string | null;
+    remindAt: string | null;
 };
 
-export default function TodoListScreen() {
-    const [todos, setTodos] = useState<Todo[]>([
-        {
-            id: '1',
-            title: '팀플 회의 준비',
-            isCompleted: false,
-            dueDate: '2026-03-27T18:00:00',
-            remindAt: '2026-03-27T17:00:00',
-        },
-    ]);
+const API_BASE_URL = 'http://127.0.0.1:5000';
 
+export default function TodoListScreen() {
+    const [todos, setTodos] = useState<Todo[]>([]);
     const [openTodoId, setOpenTodoId] = useState<string | null>(null);
 
     const [showForm, setShowForm] = useState(false);
@@ -35,9 +28,35 @@ export default function TodoListScreen() {
     const [dueDate, setDueDate] = useState('');
     const [remindAt, setRemindAt] = useState('');
 
+    const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+    const [editTitle, setEditTitle] = useState('');
+    const [editDueDate, setEditDueDate] = useState('');
+    const [editRemindAt, setEditRemindAt] = useState('');
+
     const handleCardPress = (todoId: string) => {
         setOpenTodoId((prev) => (prev === todoId ? null : todoId));
     };
+
+    const fetchTodos = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/todos`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                Alert.alert('목록 조회 실패', data.error || 'todo 목록을 불러오지 못했습니다.');
+                return;
+            }
+
+            setTodos(data);
+        } catch (error) {
+            console.error(error);
+            Alert.alert('네트워크 오류', '서버에서 todo 목록을 가져오지 못했습니다.');
+        }
+    };
+
+    useEffect(() => {
+        fetchTodos();
+    }, []);
 
     const handleAddTodo = async () => {
         if (!title.trim()) {
@@ -51,7 +70,7 @@ export default function TodoListScreen() {
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/todos', {
+            const response = await fetch(`${API_BASE_URL}/api/todos`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -59,7 +78,7 @@ export default function TodoListScreen() {
                 body: JSON.stringify({
                     title,
                     dueDate,
-                    remindAt: remindAt || null,
+                    remindAt: remindAt.trim() ? remindAt : null,
                 }),
             });
 
@@ -70,15 +89,7 @@ export default function TodoListScreen() {
                 return;
             }
 
-            const newTodo: Todo = {
-                id: data.id,
-                title: data.title,
-                isCompleted: data.isCompleted,
-                dueDate: data.dueDate,
-                remindAt: data.remindAt,
-            };
-
-            setTodos((prev) => [...prev, newTodo]);
+            await fetchTodos();
 
             setTitle('');
             setDueDate('');
@@ -87,8 +98,88 @@ export default function TodoListScreen() {
 
             Alert.alert('성공', 'todo가 추가되었습니다.');
         } catch (error) {
-            Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
             console.error(error);
+            Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
+        }
+    };
+
+    const handleDeleteTodo = async (todoId: string) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/todos/${todoId}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                Alert.alert('삭제 실패', data.error || '삭제 중 오류가 발생했습니다.');
+                return;
+            }
+
+            await fetchTodos();
+
+            if (openTodoId === todoId) {
+                setOpenTodoId(null);
+            }
+
+            if (editingTodoId === todoId) {
+                setEditingTodoId(null);
+            }
+
+            Alert.alert('성공', 'todo가 삭제되었습니다.');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
+        }
+    };
+
+    const startEditTodo = (todo: Todo) => {
+        setEditingTodoId(todo.id);
+        setEditTitle(todo.title ?? '');
+        setEditDueDate(todo.dueDate ?? '');
+        setEditRemindAt(todo.remindAt ?? '');
+    };
+
+    const cancelEditTodo = () => {
+        setEditingTodoId(null);
+        setEditTitle('');
+        setEditDueDate('');
+        setEditRemindAt('');
+    };
+
+    const handleUpdateTodo = async (todoId: string) => {
+        if (!editTitle.trim()) {
+            Alert.alert('오류', '제목을 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/todos/update/${todoId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: editTitle,
+                    dueDate: editDueDate.trim() ? editDueDate : null,
+                    remindAt: editRemindAt.trim() ? editRemindAt : null,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                Alert.alert('수정 실패', data.message || data.error || '수정 중 오류가 발생했습니다.');
+                return;
+            }
+
+            await fetchTodos();
+            cancelEditTodo();
+
+            Alert.alert('성공', 'todo가 수정되었습니다.');
+        } catch (error) {
+            console.error(error);
+            Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
         }
     };
 
@@ -128,15 +219,10 @@ export default function TodoListScreen() {
                     />
 
                     <View style={styles.buttonRow}>
-                        <Pressable
-                            style={styles.actionButton}
-                            onPress={() => {
-                                console.log('저장 버튼 눌림');
-                                handleAddTodo();
-                            }}
-                        >
+                        <Pressable style={styles.actionButton} onPress={handleAddTodo}>
                             <Text>저장</Text>
                         </Pressable>
+
                         <Pressable
                             style={styles.actionButton}
                             onPress={() => {
@@ -153,36 +239,91 @@ export default function TodoListScreen() {
             )}
 
             <View style={styles.listContainer}>
-                {todos.map((todo) => {
-                    const isOpen = openTodoId === todo.id;
+                {todos.length === 0 ? (
+                    <View style={styles.emptyBox}>
+                        <Text>아직 등록된 할 일이 없어요.</Text>
+                    </View>
+                ) : (
+                    todos.map((todo) => {
+                        const isOpen = openTodoId === todo.id;
+                        const isEditing = editingTodoId === todo.id;
 
-                    return (
-                        <View key={todo.id} style={styles.card}>
-                            <Pressable onPress={() => handleCardPress(todo.id)}>
-                                <Text style={styles.cardTitle}>{todo.title}</Text>
-                                <Text>완료 여부: {todo.isCompleted ? '완료' : '미완료'}</Text>
-                                <Text>마감일: {todo.dueDate}</Text>
-                            </Pressable>
+                        return (
+                            <View key={todo.id} style={styles.card}>
+                                <Pressable onPress={() => handleCardPress(todo.id)}>
+                                    <Text style={styles.cardTitle}>{todo.title}</Text>
+                                    <Text>완료 여부: {todo.isCompleted ? '완료' : '미완료'}</Text>
+                                    <Text>마감일: {todo.dueDate ?? '없음'}</Text>
+                                </Pressable>
 
-                            {isOpen && (
-                                <View style={styles.detailBox}>
-                                    <Text>알림시간: {todo.remindAt}</Text>
-                                    <Text>완료 여부 UI 자리</Text>
+                                {isOpen && (
+                                    <View style={styles.detailBox}>
+                                        {!isEditing ? (
+                                            <>
+                                                <Text>알림시간: {todo.remindAt ?? '없음'}</Text>
 
-                                    <View style={styles.buttonRow}>
-                                        <Pressable style={styles.actionButton}>
-                                            <Text>수정</Text>
-                                        </Pressable>
+                                                <View style={styles.buttonRow}>
+                                                    <Pressable
+                                                        style={styles.actionButton}
+                                                        onPress={() => startEditTodo(todo)}
+                                                    >
+                                                        <Text>수정</Text>
+                                                    </Pressable>
 
-                                        <Pressable style={styles.actionButton}>
-                                            <Text>삭제</Text>
-                                        </Pressable>
+                                                    <Pressable
+                                                        style={styles.actionButton}
+                                                        onPress={() => handleDeleteTodo(todo.id)}
+                                                    >
+                                                        <Text>삭제</Text>
+                                                    </Pressable>
+                                                </View>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Text>제목</Text>
+                                                <TextInput
+                                                    style={styles.input}
+                                                    value={editTitle}
+                                                    onChangeText={setEditTitle}
+                                                    placeholder="제목을 입력하세요"
+                                                />
+
+                                                <Text>마감일</Text>
+                                                <TextInput
+                                                    style={styles.input}
+                                                    value={editDueDate}
+                                                    onChangeText={setEditDueDate}
+                                                    placeholder="예: 2026-03-27T18:00:00"
+                                                />
+
+                                                <Text>알림시간</Text>
+                                                <TextInput
+                                                    style={styles.input}
+                                                    value={editRemindAt}
+                                                    onChangeText={setEditRemindAt}
+                                                    placeholder="예: 2026-03-27T17:00:00"
+                                                />
+
+                                                <View style={styles.buttonRow}>
+                                                    <Pressable
+                                                        style={styles.actionButton}
+                                                        onPress={() => handleUpdateTodo(todo.id)}
+                                                    >
+                                                        <Text>저장</Text>
+                                                    </Pressable>
+
+                                                    <Pressable style={styles.actionButton} onPress={cancelEditTodo}>
+                                                        <Text>취소</Text>
+                                                    </Pressable>
+                                                </View>
+                                            </>
+                                        )}
                                     </View>
-                                </View>
-                            )}
-                        </View>
-                    );
-                })}
+                                )}
+                            </View>
+                        );
+                    })
+                )}
             </View>
         </ScrollView>
     );
@@ -225,6 +366,10 @@ const styles = StyleSheet.create({
     },
     listContainer: {
         gap: 12,
+    },
+    emptyBox: {
+        borderWidth: 1,
+        padding: 16,
     },
     card: {
         borderWidth: 1,
