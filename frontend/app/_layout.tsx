@@ -21,6 +21,7 @@ GoogleSignin.configure({
 
 export const unstable_settings = {
   anchor: '(auth)',
+  // anchor: '(tabs)',
 };
 
 export default function RootLayout() {

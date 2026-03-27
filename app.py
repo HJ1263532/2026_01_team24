@@ -1,5 +1,7 @@
 from flask import Flask
+from flask import send_from_directory
 from backend.todolist.todo import todo_bp
+from backend.diary.diary import diary_bp
 from dotenv import load_dotenv
 from backend.oauth.oauth import oauth_bp
 import os
@@ -15,7 +17,12 @@ load_dotenv(os.path.join(os.path.dirname(__file__), 'backend', '.env'))
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
 app.register_blueprint(todo_bp)
+app.register_blueprint(diary_bp)
 app.register_blueprint(oauth_bp)
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory("uploads",filename)
 
 print(app.url_map)
 
@@ -36,3 +43,4 @@ if __name__ == "__main__":
         start_scheduler()
 
     app.run(debug=True)
+

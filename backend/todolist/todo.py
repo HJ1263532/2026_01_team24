@@ -82,17 +82,20 @@ def delete_todo(todo_id):
 #리스트 전체 조회
 @todo_bp.route("/api/todos", methods=["GET"])
 def get_todos():
-
     result = []
 
     for doc in todos.find().sort("createdAt", 1):
+        created_at = doc.get("createdAt")
+        due_date = doc.get("dueDate")
+        remind_at = doc.get("remindAt")
+
         result.append({
             "id": str(doc["_id"]),
-            "title": doc["title"],
-            "isCompleted":doc["isCompleted"],
-            "createdAt": doc["createdAt"],
-            "dueDate": doc.get["dueDate"],
-            "remindAt": doc.get["remindAt"]
+            "title": doc.get("title", ""),
+            "isCompleted": doc.get("isCompleted", False),
+            "createdAt": created_at.isoformat() if created_at else None,
+            "dueDate": due_date.isoformat() if due_date else None,
+            "remindAt": remind_at.isoformat() if remind_at else None,
         })
 
     return jsonify(result)

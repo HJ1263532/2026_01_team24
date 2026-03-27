@@ -3,9 +3,12 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+<<<<<<< HEAD
 # vscode
 .vscode/
 
+=======
+>>>>>>> 0595f79f716514220a61f633c4225c8e752481aa
 # C extensions
 *.so
 
@@ -212,3 +215,4 @@ __marimo__/
 .idea/
 
 serviceAccountKey.json
+uploads/
