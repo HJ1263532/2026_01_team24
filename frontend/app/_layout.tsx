@@ -5,16 +5,43 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+import { useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router'
+
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+console.log('webClientId:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  offlineAccess: true,
+});
+
+
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: '(auth)',
 };
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await SecureStore.getItemAsync('token');
+      if (token) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(auth)/login');
+      }
+    };
+    checkToken();
+  }, []);
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
       </Stack>
