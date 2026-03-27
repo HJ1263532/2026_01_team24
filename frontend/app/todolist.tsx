@@ -7,6 +7,7 @@ import {
     ScrollView,
     TextInput,
     Alert,
+    Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
@@ -32,7 +33,11 @@ type DateTimePickerGroupProps = {
     onChange: (field: keyof DateTimeParts, nextValue: string) => void;
 };
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
+// const API_BASE_URL = 'http://127.0.0.1:5000';
+const API_BASE_URL =
+    Platform.OS === 'android'
+        ? 'http://10.0.2.2:5000'
+        : 'http://127.0.0.1:5000';
 
 const DEFAULT_DUE_DATE: DateTimeParts = {
     year: '2026',
@@ -252,38 +257,73 @@ export default function TodoListScreen() {
         }
     };
 
+    const showMessage = (title: string, message?: string) => {
+        if (Platform.OS === 'web') {
+            window.alert([title, message].filter(Boolean).join('\n'));
+            return;
+        }
+
+        Alert.alert(title, message);
+    };
+
+    const deleteTodoRequest = async (todoId: string) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/todos/${todoId}`, {
+                method: 'DELETE',
+            });
+
+            const raw = await response.text();
+            let data: any = null;
+
+            try {
+                data = raw ? JSON.parse(raw) : null;
+            } catch {
+                data = raw;
+            }
+
+            console.log('DELETE response:', response.status, data);
+
+            if (!response.ok) {
+                showMessage('삭제 실패', data?.error || data?.message || '삭제 중 오류가 발생했습니다.');
+                return;
+            }
+
+            await fetchTodos();
+
+            if (openTodoId === todoId) {
+                setOpenTodoId(null);
+            }
+
+            if (editingTodoId === todoId) {
+                setEditingTodoId(null);
+                resetEditForm();
+            }
+
+            showMessage('성공', 'todo가 삭제되었습니다.');
+        } catch (error) {
+            console.error('DELETE fetch error:', error);
+            showMessage('네트워크 오류', '서버 연결에 실패했습니다.');
+        }
+    };
+
     const handleDeleteTodo = (todoId: string) => {
+        console.log('handleDeleteTodo 실행:', todoId, Platform.OS);
+
+        if (Platform.OS === 'web') {
+            const ok = window.confirm('정말 삭제하시겠습니까?');
+            if (ok) {
+                deleteTodoRequest(todoId);
+            }
+            return;
+        }
+
         Alert.alert('삭제 확인', '정말 삭제하시겠습니까?', [
             { text: '취소', style: 'cancel' },
             {
                 text: '삭제',
                 style: 'destructive',
-                onPress: async () => {
-                    try {
-                        const response = await fetch(`${API_BASE_URL}/api/todos/${todoId}`, {
-                            method: 'DELETE',
-                        });
-
-                        const data = await response.json();
-
-                        if (!response.ok) {
-                            Alert.alert('삭제 실패', data.error || '삭제 중 오류가 발생했습니다.');
-                            return;
-                        }
-
-                        await fetchTodos();
-
-                        if (openTodoId === todoId) setOpenTodoId(null);
-                        if (editingTodoId === todoId) {
-                            setEditingTodoId(null);
-                            resetEditForm();
-                        }
-
-                        Alert.alert('성공', 'todo가 삭제되었습니다.');
-                    } catch (error) {
-                        console.error(error);
-                        Alert.alert('네트워크 오류', '서버 연결에 실패했습니다.');
-                    }
+                onPress: () => {
+                    deleteTodoRequest(todoId);
                 },
             },
         ]);
@@ -357,6 +397,7 @@ export default function TodoListScreen() {
                             style={styles.actionButton}
                             onPress={(e) => {
                                 e.stopPropagation();
+                                console.log('삭제 버튼 눌림', todo.id);
                                 handleDeleteTodo(todo.id);
                             }}
                         >
