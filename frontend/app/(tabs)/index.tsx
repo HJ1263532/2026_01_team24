@@ -22,7 +22,16 @@ export default function HomeScreen() {
         <ThemedText type="title">Welcome!</ThemedText>
         <Text>안녕하세요</Text>
         <HelloWave />
+        <ThemedView style={{ marginTop: 20 }}>
+          <Link href="/todolist">
+            {/* todolist 페이지 이동 버튼 */}
+            <ThemedText type="subtitle" style={styles.todoButton}>
+              todo쓰러가기
+            </ThemedText>
+          </Link>
+        </ThemedView>
       </ThemedView>
+
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
@@ -96,5 +105,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
+  },
+  // todolist 페이지 이동 버튼 디자인
+  todoButton: {
+    backgroundColor: '#4F46E5',
+    color: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
+    textAlign: 'center',
   },
 });
