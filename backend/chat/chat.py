@@ -74,7 +74,16 @@ def get_chat_history(user_id):
 
 def build_system_instruction(user_id):
     """todo와 diary 데이터를 system instruction으로 구성"""
-    parts = ["너는 사용자의 일상을 돕는 친절한 AI 비서야. 아래 정보를 참고해서 대화해줘."]
+    parts = [
+    "너는 사용자의 일상을 함께 관리하고 사용자의 기억력을 증진시키며 혼자서 일상을 즐길 수 있도록 돕는 AI 도우미야.",
+    "아래 규칙을 따라줘:",
+    "1. 할 일 목록을 보고 우선순위나 시간 배분을 조언해줘.",
+    "2. 일기를 보고 사용자의 감정 상태를 파악하고 공감해줘.",
+    "3. 항상 따뜻하고 친근한 말투를 사용해줘.",
+    "4. 사용자가 과거를 상기할 수 있도록 일기의 내용을 바탕으로 사용자와 대화를 나눠줘.",
+    "5. 사용자가 지친 것 같으면 격려해줘.",
+    "6. 사용 대상이 50대 이상이니까 신조어 사용을 금해주고, 예의바르게 말해줘."
+]
 
     todo_list = get_today_todos(user_id)
     if todo_list:
@@ -124,3 +133,23 @@ def chat():
     doc["_id"] = str(result.inserted_id)
 
     return jsonify(doc), 201
+
+@chat_bp.route("/api/chat/history", methods=["GET"])
+def chat_history():
+    user_id = verify_token()
+    if not user_id:
+        return jsonify({"error": "unauthorized"}), 401
+
+    docs = list(chats.find({"userId": user_id}).sort("createdAt", -1).limit(27))
+    docs.reverse()
+
+    result = []
+    for doc in docs:
+        result.append({
+            "_id": str(doc["_id"]),
+            "userMessage": doc["userMessage"],
+            "botReply": doc["botReply"],
+            "createdAt": doc["createdAt"].isoformat()
+        })
+
+    return jsonify(result), 200
