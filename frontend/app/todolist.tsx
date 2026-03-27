@@ -374,6 +374,30 @@ export default function TodoListScreen() {
         }
     };
 
+    const toggleComplete = async (todo: Todo) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/todos/${todo.id}/complete`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    isCompleted: !todo.isCompleted,
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                Alert.alert('업데이트 실패', data.message || '완료 상태 변경 실패');
+                return;
+            }
+
+            await fetchTodos();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('네트워크 오류', '서버 연결 실패');
+        }
+    };
+
     const renderTodoDetail = (todo: Todo) => {
         const isEditing = editingTodoId === todo.id;
 
@@ -537,7 +561,24 @@ export default function TodoListScreen() {
                                     }}
                                 >
                                     <Text style={styles.cardTitle}>{todo.title}</Text>
-                                    <Text>완료 여부: {todo.isCompleted ? '완료' : '미완료'}</Text>
+                                    <View style={styles.checkboxRow}>
+                                        <Pressable
+                                            style={[
+                                                styles.checkbox,
+                                                todo.isCompleted && styles.checkboxChecked
+                                            ]}
+                                            onPress={(e) => {
+                                                e.stopPropagation();
+                                                toggleComplete(todo);
+                                            }}
+                                        >
+                                            {todo.isCompleted && <Text style={styles.checkmark}>✓</Text>}
+                                        </Pressable>
+
+                                        <Text>
+                                            {todo.isCompleted ? '완료' : '미완료'}
+                                        </Text>
+                                    </View>
                                     <Text>마감일: {formatDate(todo.dueDate)}</Text>
 
                                     {isOpen && (
@@ -646,5 +687,29 @@ const styles = StyleSheet.create({
     },
     previewText: {
         marginTop: 4,
+    },
+    checkboxRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
+    },
+
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+
+    checkboxChecked: {
+        backgroundColor: 'black',
+    },
+
+    checkmark: {
+        color: 'white',
+        fontSize: 14,
+        fontWeight: 'bold',
     },
 });
