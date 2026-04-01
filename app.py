@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import send_from_directory
 from backend.todolist.todo import todo_bp
 from backend.diary.diary import diary_bp
 from backend.chat.chat import chat_bp
@@ -20,7 +21,11 @@ app.register_blueprint(diary_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(oauth_bp)
 
-#print(app.url_map)
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory("uploads",filename)
+
+print(app.url_map)
 
 # ✅ 스케줄러 등록 (debug 모드 중복 실행 방지)
 def start_scheduler():
@@ -39,3 +44,4 @@ if __name__ == "__main__":
         start_scheduler()
 
     app.run(debug=True)
+
