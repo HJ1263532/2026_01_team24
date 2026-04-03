@@ -6,6 +6,9 @@ import jwt
 from backend.db import db
 from datetime import datetime, timedelta
 from bson import ObjectId
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 oauth_bp = Blueprint("oauth", __name__)
 
@@ -18,7 +21,6 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 JWT_SECRET = os.getenv("JWT_SECRET")
-
 
 # JWT 검증 함수
 def verify_token():

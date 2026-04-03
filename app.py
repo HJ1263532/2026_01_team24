@@ -12,7 +12,8 @@ from backend.notification_job import check_todo_notifications
 
 print("app.py start")
 
-load_dotenv()
+# load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), 'backend', '.env'))
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
