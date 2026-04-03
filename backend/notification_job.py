@@ -7,9 +7,9 @@ def check_todo_notifications():
 
     now = datetime.utcnow()
 
-    # 1️⃣ remindAt 기준 알림
+    # 1️⃣ remindAt 기준 알림 (10분 이내에 지난 것만)
     remind_targets = todos.find({
-        "remindAt": {"$ne": None, "$lte": now},
+        "remindAt": {"$ne": None, "$lte": now, "$gte": now - timedelta(minutes=10)},
         "remindNotified": False
     })
 
@@ -20,13 +20,14 @@ def check_todo_notifications():
             {"$set": {"remindNotified": True}}
         )
 
-    # 2️⃣ dueDate - 1시간 기준 알림 (remindAt 없는 경우만)
+    # 2️⃣ dueDate - 1시간 기준 알림 (remindAt 없는 경우만, 마감 전인 것만)
     due_targets = todos.find({
         "remindAt": None,
-        "dueDate": {"$ne": None},
         "dueBeforeNotified": False,
         "dueDate": {
-            "$lte": now + timedelta(hours=1)
+            "$ne": None,
+            "$lte": now + timedelta(hours=1),
+            "$gte": now
         }
     })
 
