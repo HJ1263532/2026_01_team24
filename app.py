@@ -3,6 +3,7 @@ from flask import send_from_directory
 from backend.todolist.todo import todo_bp
 from backend.diary.diary import diary_bp
 from backend.chat.chat import chat_bp
+from backend.calendar.calendar import calendar_bp
 from dotenv import load_dotenv
 from backend.oauth.oauth import oauth_bp
 import os
@@ -21,6 +22,7 @@ app.register_blueprint(todo_bp)
 app.register_blueprint(diary_bp)
 app.register_blueprint(chat_bp)
 app.register_blueprint(oauth_bp)
+app.register_blueprint(calendar_bp)
 
 @app.route("/uploads/<filename>")
 def uploaded_file(filename):

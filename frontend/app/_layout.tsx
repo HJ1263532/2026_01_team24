@@ -16,6 +16,11 @@ console.log('webClientId:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
   offlineAccess: true,
+  scopes: [
+    'profile',
+    'email',
+    'https://www.googleapis.com/auth/calendar'
+  ],
 });
 
 
