@@ -4,13 +4,13 @@ import HomeCard from '@/components/common/HomeCard';
 
 export default function MemoryHelperCard() {
     return (
-        <HomeCard emoji="💬" title="기억 도우미" backgroundColor="#EEF2FF">
-            <Text style={styles.cardText}>기억이 잘 나지 않을 때 눌러보세요.</Text>
+        <HomeCard emoji="💬" title="AI 챗봇" backgroundColor="#EEF2FF">
+            <Text style={styles.cardText}>AI와 대화를 나눠보세요!</Text>
             <Text style={styles.subText}>최근 기록을 바탕으로 대화해볼 수 있어요.</Text>
 
             <Link href="/memory-chat" asChild>
                 <Pressable style={styles.button}>
-                    <Text style={styles.buttonText}>기억 도우미 열기</Text>
+                    <Text style={styles.buttonText}>AI와 대화하러 가기</Text>
                 </Pressable>
             </Link>
         </HomeCard>
