@@ -2,15 +2,19 @@ import { StyleSheet, Text, Pressable } from 'react-native';
 import { Link } from 'expo-router';
 import HomeCard from '@/components/common/HomeCard';
 
-export default function MemoryHelperCard() {
+export default function AIChatCard() {
     return (
-        <HomeCard emoji="💬" title="AI 챗봇" backgroundColor="#EEF2FF">
-            <Text style={styles.cardText}>AI와 대화를 나눠보세요!</Text>
-            <Text style={styles.subText}>최근 기록을 바탕으로 대화해볼 수 있어요.</Text>
+        <HomeCard emoji="🤖" title="AI 기억 도우미" backgroundColor="#EEF2FF">
+            <Text style={styles.cardText}>
+                오늘의 할 일과 일기를 바탕으로 대화를 도와드려요.
+            </Text>
+            <Text style={styles.subText}>
+                궁금한 일이나 기억하고 싶은 일을 편하게 물어보세요.
+            </Text>
 
-            <Link href="/memory-chat" asChild>
+            <Link href="/chat" asChild>
                 <Pressable style={styles.button}>
-                    <Text style={styles.buttonText}>AI와 대화하러 가기</Text>
+                    <Text style={styles.buttonText}>AI와 대화하기</Text>
                 </Pressable>
             </Link>
         </HomeCard>
