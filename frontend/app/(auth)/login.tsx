@@ -21,6 +21,7 @@ export default function LoginScreen() {
     if (loading) return;
     setLoading(true);
     try {
+      await SecureStore.deleteItemAsync('token');
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       const userInfo = await GoogleSignin.signIn();

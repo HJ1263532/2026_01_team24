@@ -7,6 +7,7 @@ from backend.calendar.calendar import calendar_bp
 from dotenv import load_dotenv
 from backend.oauth.oauth import oauth_bp
 import os
+from flask_cors import CORS
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from backend.notification_job import check_todo_notifications
@@ -17,6 +18,7 @@ print("app.py start")
 load_dotenv(os.path.join(os.path.dirname(__file__), 'backend', '.env'))
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "http://localhost:8081"}})
 app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
 app.register_blueprint(todo_bp)
 app.register_blueprint(diary_bp)
@@ -46,5 +48,6 @@ if __name__ == "__main__":
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
         start_scheduler()
 
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
 

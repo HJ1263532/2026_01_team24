@@ -8,7 +8,7 @@ export default function DiaryCard() {
             <Text style={styles.cardText}>오늘 있었던 일을 한 줄로 남겨볼까요?</Text>
             <Text style={styles.subText}>짧게 적어도 괜찮아요.</Text>
 
-            <Link href="/diary" asChild>
+            <Link href="/diary/create" asChild>
                 <Pressable style={styles.button}>
                     <Text style={styles.buttonText}>일기 쓰기</Text>
                 </Pressable>

@@ -36,7 +36,6 @@ export default function ChatScreen() {
 
     const loadTokenAndHistory = async () => {
         try {
-            // 여기 'token'은 네 로그인 코드에서 저장한 이름과 같아야 해
             const savedToken = await SecureStore.getItemAsync('token');
 
             if (!savedToken) {
